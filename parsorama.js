@@ -5,7 +5,7 @@ parsorama.Parser = function Parser(nodes) {
     for(var node in nodes) this.tokens[node] = nodes[node].tokens.start;
 };
 parsorama.Parser.prototype.parse = function(str) {
-    var content = new Content();
+    var content = new parsorama.Content();
     var regex = parsorama.tokenRegEx(this.tokens);
     var rest = str;
     var index = 0;
@@ -27,11 +27,13 @@ parsorama.Parser.Pointer = function Pointer(str, index, length) {
     this.end = null;
 };
 parsorama.Parser.Pointer.prototype.endExp = function(end) {
+    end = new RegExp(end);
     this.end = this.start + this.code.search(end) + end.source.length;
     this.code = this.source.slice(this.start, this.end);
     this.content = this.content.slice(0, this.content.search(end));
 };
 parsorama.Parser.Pointer.prototype.startExp = function(start, handler) {
+    start = new RegExp(start);
     if(this.content.search(start) > 0) return handler(new parsorama.Parser.Pointer(this.content, this.content.search(start), start.source.length));
 };
 parsorama.Transformer = function Transformer() {
