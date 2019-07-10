@@ -11,7 +11,7 @@ parsorama.Parser.prototype.parse = function(str) {
     var index = 0;
     var current = regex.match(str);
     for(index in current) {
-        new nodes[regex[index]](new parsorama.Parser.Pointer(str, current.index));
+        new nodes[regex[index]].parse(new parsorama.Parser.Pointer(str, current.index));
     }
 };
 parsorama.Parser.prototype.addTransformer = function(name, transformer) {
