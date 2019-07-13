@@ -3,7 +3,7 @@ var parsorama = (function() {
         this.nodes = nodes || {};
         this.tokens = {};
         for(var node in nodes) this.tokens[node] = nodes[node].tokens.start;
-    };
+    }
     Parser.prototype.parse = function(str) {
         var content = new Content();
         var regex = tokenRegEx(this.tokens);
@@ -25,7 +25,7 @@ var parsorama = (function() {
         this.content = this.code.slice(length);
         this.start = index;
         this.end = null;
-    };
+    }
     Cursor.prototype.endExp = function(end) {
         end = new RegExp(end);
         this.end = this.start + this.code.search(end) + end.source.length;
@@ -38,7 +38,7 @@ var parsorama = (function() {
     };
     function Transformer() {
         this.handlers = {};
-    };
+    }
     Transformer.prototype.addHandler = function(node, handler) {
         if(!this.handlers[node]) this.handlers[node] = [];
         this.handlers[node].push(handler);
@@ -49,7 +49,7 @@ var parsorama = (function() {
     };
     function Content() {
         Array.apply(this);
-    };
+    }
     Content.prototype = Object.create(Array.prototype);
     Content.prototype.constructor = Content;
     Content.prototype.toString = function() {
