@@ -60,7 +60,7 @@ var parsorama = (function() {
         var index = 1;
         for(var label in tokens) regex[index++] = label;
         return regex;
-    };
+    }
     Parser.Cursor = Cursor;
     return {Parser, Transformer, tokenRegEx};
 })();
