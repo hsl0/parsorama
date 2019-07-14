@@ -65,7 +65,7 @@ var parsorama = (function() {
         var ltag = Symbol('ExpressionLoop');
         var value;
         this[symbols.LOOP][ltag] = true;
-        for(var index = 0; index <= until && this.current < length && this[symbols.LOOP] === ltag; index++) {
+        for(var index = 0; (until? index <= until : true) && this.current < length && this[symbols.LOOP] === ltag; index++) {
             value = this.startExp(start, handler, value, ltag);
         }
         return value;
