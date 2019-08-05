@@ -25,14 +25,18 @@ var parsorama = (function() {
         this[name].transformer = transformer;
         return this;
     };
-    function Cursor(str, index, length, parent, ltag) {
+    function Cursor(text, index, token, parent, ltag) {
         this.parent = parent || null;
-        this.source = str;
-        this.code = str.slice(index);
-        this.content = this.code.slice(length);
-        this.start = index;
-        this.end = null;
-        this.current = 0;
+        this.source = text;
+        this.expression = text.slice(index);
+        this.startToken = token;
+        this.endToken = null;
+        this.content = this.expression.slice(this.startToken.length);
+        this.expStart = index;
+        this.expEnd = null;
+        this.contentStart = this.expStart + this.startToken.length;
+        this.contentEnd = null;
+        this.index = 0;
         this[symbols.LOOP] = {};
         this.break = function() {
             if(!ltag) return false;
@@ -41,11 +45,15 @@ var parsorama = (function() {
         }
     }
     Cursor.prototype.endExp = function(end) {
+        var endToken = end;
         end = new RegExp(escapeRegExp(end));
         if(this.content.search(end) != -1) {
-            this.end = this.start + this.code.search(end) + end.source.length;
-            this.code = this.source.slice(this.start, this.end);
-            this.content = this.content.slice(0, this.content.search(end));
+            this.endToken = endToken;
+            this.expEnd = this.expStart + this.startToken.length + this.index + this.expression.slice(this.startToken.length + this.index).search(end) + this.endToken.length;
+            this.expression = this.source.slice(this.expStart, this.expEnd);
+            this.contentEnd = this.expEnd - this.endToken.length;
+            this.content = this.content.slice(0, this.index + this.content.slice(this.index).search(end));
+            this.index = this.content.length;
         }
     };
     Cursor.prototype.startExp = function(start, handler, arg, ltag) {
@@ -53,10 +61,10 @@ var parsorama = (function() {
         var index = this.content.search(start);
         var child, value;
         if(index != -1) {
-            this.current += index;
-            child = new Cursor(this.content, this.current, start.length && regex.source.length, this, ltag);
+            this.index += index;
+            child = new Cursor(this.content, this.index, start, this, ltag);
             value = handler(child, arg);
-            this.current += child.code.length;
+            this.index = child.expEnd;
             return value;
         }
     };
@@ -65,21 +73,21 @@ var parsorama = (function() {
         var ltag = Symbol('ExpressionLoop');
         var value;
         this[symbols.LOOP][ltag] = true;
-        for(var index = 0; (until? index <= until : true) && this.current < length && this[symbols.LOOP][ltag]; index++) {
+        for(var index = 0; (until? index <= until : true) && this.index < length && this[symbols.LOOP][ltag]; index++) {
             value = this.startExp(start, handler, value, ltag);
         }
         return value;
     };
     Cursor.prototype.move = function(index) {
-        this.current += index;
+        this.index += index;
         return this;
     };
     Cursor.prototype.jump = function(index) {
-        this.current = index;
+        this.index = index;
         return this;
     };
-    Cursor.prototype.return = function() {
-        this.current = 0;
+    Cursor.prototype.home = function() {
+        this.index = 0;
         return this;
     };
     function Transformer() {
@@ -110,3 +118,4 @@ var parsorama = (function() {
     Parser.Cursor = Cursor;
     return {Parser, Transformer, tokenRegEx};
 })();
+debugger;
