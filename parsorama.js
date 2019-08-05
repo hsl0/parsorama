@@ -118,4 +118,3 @@ var parsorama = (function() {
     Parser.Cursor = Cursor;
     return {Parser, Transformer, tokenRegEx};
 })();
-debugger;
