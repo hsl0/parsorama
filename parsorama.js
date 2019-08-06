@@ -25,7 +25,7 @@ var parsorama = (function() {
         this[name].transformer = transformer;
         return this;
     };
-    function Cursor(text, index, token, parent, ltag) {
+    function Cursor(text, index, token, parent) {
         this.parent = parent || null;
         this.source = text;
         this.expression = text.slice(index);
@@ -37,12 +37,6 @@ var parsorama = (function() {
         this.contentStart = this.expStart + this.startToken.length;
         this.contentEnd = null;
         this.index = 0;
-        this[symbols.LOOP] = {};
-        this.break = function() {
-            if(!ltag) return false;
-            this.parent[symbols.LOOP][ltag] = false;
-            return true;
-        }
     }
     Cursor.prototype.endExp = function(end) {
         var endToken = end;
@@ -56,27 +50,44 @@ var parsorama = (function() {
             this.index = this.content.length;
         }
     };
-    Cursor.prototype.startExp = function(start, handler, arg, ltag) {
+    Cursor.prototype.startExp = function(start, handler, arg) {
         var regex = new RegExp(escapeRegExp(start));
         var index = this.content.search(start);
         var child, value;
         if(index != -1) {
             this.index += index;
-            child = new Cursor(this.content, this.index, start, this, ltag);
+            child = new Cursor(this.content, this.index, start, this);
             value = handler(child, arg);
             this.index = child.expEnd;
             return value;
         }
     };
-    Cursor.prototype.repeatExp = function(start, handler, until) {
-        var length = this.content.length;
-        var ltag = Symbol('ExpressionLoop');
-        var value;
-        this[symbols.LOOP][ltag] = true;
-        for(var index = 0; (until? index <= until : true) && this.index < length && this[symbols.LOOP][ltag]; index++) {
-            value = this.startExp(start, handler, value, ltag);
+    Cursor.prototype.findToken = function(tokens, handlers, arg) {
+        tokens = tokenRegEx(tokens);
+        var text = this.content.slice(this.index);
+        var broken = false;
+        var token;
+        while(true) {
+            token = text.match(tokens).findIndex(function(value, index, arr) {
+                if(index) return value === arr[0];
+            });
+            if(broken || token === -1) break;
+            token = tokens[token];
+            arg = handlers[token]({
+                startExp: function startExp(handler, arg) {
+                    return this.context.startExp(token, handler, arg);
+                },
+                endExp: function endExp() {
+                    return this.context.endExp(token);
+                },
+                exit: function exit() {
+                    broken = true;
+                },
+                context: this
+            }, arg);
+            text = this.content.slice(this.index);
         }
-        return value;
+        return arg;
     };
     Cursor.prototype.move = function(index) {
         this.index += index;
