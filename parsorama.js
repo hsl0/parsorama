@@ -1,7 +1,4 @@
 var parsorama = (function() {
-    var symbols = {
-        LOOP: Symbol('loop')
-    };
     function escapeRegExp(s) {
         return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     }
