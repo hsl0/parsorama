@@ -1,15 +1,19 @@
 var parsorama = (function() {
+    /**
+     * 정규표현식 이스케이프
+     * @param {!string} s
+     */
     function escapeRegExp(s) {
         return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
     }
     function Parser(nodes) {
-        this.nodes = nodes || {};
-        this.tokens = {};
+        this.nodes = nodes || {}; // 요소
+        this.tokens = {}; // 토큰
         for(var node in nodes) this.tokens[node] = nodes[node].tokens.start;
     }
     Parser.prototype.parse = function(str) {
         var content = new Content();
-        var regex = tokenRegEx(this.tokens);
+        var regex = tokenRegEx(this.tokens); 
         var rest = str;
         var index = 0;
         var current = regex.match(str);
@@ -22,82 +26,43 @@ var parsorama = (function() {
         this[name].transformer = transformer;
         return this;
     };
-    function Cursor(text, index, token, parent) {
+    /** 
+     * 토큰을 읽어들이는 커서
+     * @class
+     * @param {!string} text - 문자열
+     * @param {number} index - 시작 위치
+     * @param {object} token - {이름: "토큰"}, start/end 필수
+     * @param {?Cursor} parent - 상위 커서
+     */
+    function Cursor(text, parent) {
         this.parent = parent || null;
-        this.source = text;
-        this.expression = text.slice(index);
-        this.startToken = token;
-        this.endToken = null;
-        this.content = this.expression.slice(this.startToken.length);
-        this.expStart = index;
-        this.expEnd = null;
-        this.contentStart = this.expStart + this.startToken.length;
-        this.contentEnd = null;
-        this.index = 0;
+        this.text = text;
     }
-    Cursor.prototype.endExp = function(end) {
-        var endToken = end;
-        end = new RegExp(escapeRegExp(end));
-        if(this.content.search(end) != -1) {
-            this.endToken = endToken;
-            this.expEnd = this.expStart + this.startToken.length + this.index + this.expression.slice(this.startToken.length + this.index).search(end) + this.endToken.length;
-            this.expression = this.source.slice(this.expStart, this.expEnd);
-            this.contentEnd = this.expEnd - this.endToken.length;
-            this.content = this.content.slice(0, this.index + this.content.slice(this.index).search(end));
-            this.index = this.content.length;
+    Cursor.prototype.index = 0;
+    Cursor.prototype.preview = function(length) {
+        return this.text.substr(index, length);
+    };
+    Cursor.prototype.next = function(length) {
+        this.index += length;
+        return this.preview(length);
+    };
+    Cursor.prototype.find = function(tokens, handler) {
+        if(typeof tokens === 'string') tokens = new Map([[tokens, handler]]);
+        var regex = "";
+        for(var token of tokens.keys()) {
+            regex += token + "|";
         }
+        var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, 1)));
+        this.index = ++capture.index;
+        capture = new Captured(match[0], this);
+        tokens.get(capture.token)(capture.cursor);
     };
-    Cursor.prototype.startExp = function(start, handler, arg) {
-        var regex = new RegExp(escapeRegExp(start));
-        var index = this.content.search(start);
-        var child, value;
-        if(index != -1) {
-            this.index += index;
-            child = new Cursor(this.content, this.index, start, this);
-            value = handler(child, arg);
-            this.index = child.expEnd;
-            return value;
-        }
-    };
-    Cursor.prototype.findToken = function(tokens, handlers, arg) {
-        tokens = tokenRegEx(tokens);
-        var text = this.content.slice(this.index);
-        var broken = false;
-        var token;
-        while(true) {
-            token = text.match(tokens).findIndex(function(value, index, arr) {
-                if(index) return value === arr[0];
-            });
-            if(broken || token === -1) break;
-            token = tokens[token];
-            arg = handlers[token]({
-                startExp: function startExp(handler, arg) {
-                    return this.context.startExp(token, handler, arg);
-                },
-                endExp: function endExp() {
-                    return this.context.endExp(token);
-                },
-                exit: function exit() {
-                    broken = true;
-                },
-                context: this
-            }, arg);
-            text = this.content.slice(this.index);
-        }
-        return arg;
-    };
-    Cursor.prototype.move = function(index) {
-        this.index += index;
-        return this;
-    };
-    Cursor.prototype.jump = function(index) {
-        this.index = index;
-        return this;
-    };
-    Cursor.prototype.home = function() {
-        this.index = 0;
-        return this;
-    };
+    function Captured(token, parent) {
+        this.token = token;
+        this.parent = parent;
+        this.cursor = new Cursor(parent.text.slice(parent.index), parent);
+    }
+    Captured.prototype.index = 0;
     function Transformer() {
         this.handlers = {};
     }
@@ -117,6 +82,10 @@ var parsorama = (function() {
     Content.prototype.toString = function() {
         return this.join('');
     };
+    /**
+     * 토큰들의 정규표현식 생성
+     * @param {object} tokens - {이름: "토큰"}
+     */
     function tokenRegEx(tokens) {
         var regex = new RegExp('(' + Object.values(tokens).map(escapeRegExp).join(')|(') + ')');
         var index = 1;
