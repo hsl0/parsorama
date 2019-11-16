@@ -30,39 +30,46 @@ var parsorama = (function() {
      * 토큰을 읽어들이는 커서
      * @class
      * @param {!string} text - 문자열
-     * @param {number} index - 시작 위치
-     * @param {object} token - {이름: "토큰"}, start/end 필수
-     * @param {?Cursor} parent - 상위 커서
      */
-    function Cursor(text, parent) {
-        this.parent = parent || null;
+    function Cursor(text) {
         this.text = text;
+        this.index = 0;
     }
-    Cursor.prototype.index = 0;
     Cursor.prototype.preview = function(length) {
-        return this.text.substr(index, length);
+        if(length <= 0) throw new RangeError("length must be 1 or more");
+        if(this.index + length > this.text.length) return null;
+        return this.text.substr(this.index, length);
     };
     Cursor.prototype.next = function(length) {
+        if(length <= 0) return;
+        if(this.index + length > this.text.length) return null;
+        var text = this.preview(length);
         this.index += length;
-        return this.preview(length);
+        return text;
     };
-    Cursor.prototype.find = function(tokens, handler) {
-        if(typeof tokens === 'string') tokens = new Map([[tokens, handler]]);
+    Cursor.prototype.find = function(tokens, arg) {
+        if(!(tokens instanceof Map)) throw new TypeError("tokens argument must be a Map object");
         var regex = "";
         for(var token of tokens.keys()) {
             regex += token + "|";
         }
         var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, 1)));
-        this.index = ++capture.index;
-        capture = new Captured(match[0], this);
-        tokens.get(capture.token)(capture.cursor);
+        capture = new Captured(this, capture.index, capture[0]);
+        tokens.get(capture.token)(capture, arg);
+        this.index = capture.index + capture.token.length - 1;
     };
-    function Captured(token, parent) {
-        this.token = token;
-        this.parent = parent;
-        this.cursor = new Cursor(parent.text.slice(parent.index), parent);
+    Cursor.prototype.home = function() {
+        this.index = 0;
+        return this;
     }
-    Captured.prototype.index = 0;
+    function Captured(parent, index, token) {
+        this.parent = parent;
+        this.index = index;
+        this.token = token;
+    }
+    Captured.prototype.take = function() {
+        return this.parent.text.slice(this.parent.index, this.index);
+    };
     function Transformer() {
         this.handlers = {};
     }
