@@ -1,26 +1,12 @@
 var parsorama = (function() {
-    /**
-     * 정규표현식 이스케이프
-     * @param {!string} s
-     */
-    function escapeRegExp(s) {
-        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-    }
-    function Parser(nodes) {
+    function Parser(nodes, tokens, parser) {
         this.nodes = nodes || {}; // 요소
-        this.tokens = {}; // 토큰
-        for(var node in nodes) this.tokens[node] = nodes[node].tokens.start;
+        this.tokens = new Map(tokens); // 토큰
+        this.parser = function(str) {
+            var cursor = new Cursor(str, this);
+            return parser(cursor) || cursor.done();
+        };
     }
-    Parser.prototype.parse = function(str) {
-        var content = new Content();
-        var regex = tokenRegEx(this.tokens); 
-        var rest = str;
-        var index = 0;
-        var current = regex.match(str);
-        for(index in current) {
-            new nodes[regex[index]].parse(new Cursor(str, current.index));
-        }
-    };
     Parser.prototype.addTransformer = function(name, transformer) {
         this[name] = transformer.transform.bind(transformer);
         this[name].transformer = transformer;
@@ -30,10 +16,13 @@ var parsorama = (function() {
      * 토큰을 읽어들이는 커서
      * @class
      * @param {!string} text - 문자열
+     * @param {Parser} parent
      */
-    function Cursor(text) {
+    function Cursor(text, parent) {
         this.text = text;
+        this.parent = parent || null;
         this.index = 0;
+        this.stack = new ScopeStack();
     }
     Cursor.prototype.preview = function(length) {
         if(length <= 0) throw new RangeError("length must be 1 or more");
@@ -61,6 +50,10 @@ var parsorama = (function() {
     Cursor.prototype.home = function() {
         this.index = 0;
         return this;
+    };
+    Cursor.prototype.done = function() {
+        while(this.stack.depth > 1) this.stack.push(this.stack.done());
+        return this.stack.done();
     }
     function Captured(parent, index, token) {
         this.parent = parent;
@@ -69,6 +62,32 @@ var parsorama = (function() {
     }
     Captured.prototype.take = function() {
         return this.parent.text.slice(this.parent.index, this.index);
+    };
+    function ScopeStack() {
+        var stack = [];
+        Object.defineProperties(this, {
+            depth: {
+                get: function() {
+                    return stack.length;
+                }
+            },
+            current: {
+                get: function() {
+                    return stack[stack.length - 1];
+                }
+            }
+        });
+        this.begin = function() {
+            var content = new Content();
+            stack.push(content);
+            return content;
+        }
+        this.done = function() {
+            return stack.pop();
+        }
+    }
+    ScopeStack.prototype.push = function(node) {
+        return this.current.push(node);
     };
     function Transformer() {
         this.handlers = {};
@@ -89,16 +108,6 @@ var parsorama = (function() {
     Content.prototype.toString = function() {
         return this.join('');
     };
-    /**
-     * 토큰들의 정규표현식 생성
-     * @param {object} tokens - {이름: "토큰"}
-     */
-    function tokenRegEx(tokens) {
-        var regex = new RegExp('(' + Object.values(tokens).map(escapeRegExp).join(')|(') + ')');
-        var index = 1;
-        for(var label in tokens) regex[index++] = label;
-        return regex;
-    }
     Parser.Cursor = Cursor;
-    return {Parser, Transformer, tokenRegEx};
+    return {Parser, Transformer};
 })();
