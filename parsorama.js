@@ -2,7 +2,7 @@ var parsorama = (function() {
     function Parser(nodes, tokens, parser) {
         this.nodes = nodes || {}; // 요소
         this.tokens = new Map(tokens); // 토큰
-        this.parser = function(str) {
+        this.parse = function(str) {
             var cursor = new Cursor(str, this);
             return parser(cursor) || cursor.done();
         };
@@ -73,7 +73,8 @@ var parsorama = (function() {
             },
             current: {
                 get: function() {
-                    return stack[stack.length - 1];
+                    var cur = stack[stack.length - 1];
+                    return cur[stack.length - 1];
                 }
             }
         });
