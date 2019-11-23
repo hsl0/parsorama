@@ -1,4 +1,11 @@
 var parsorama = (function() {
+    /**
+     * 정규표현식 이스케이프
+     * @param {!string} s
+     */
+    function escapeRegExp(s) {
+        return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    }
     function Parser(nodes, tokens, parser) {
         this.nodes = nodes || {}; // 요소
         this.tokens = new Map(tokens); // 토큰
@@ -27,9 +34,10 @@ var parsorama = (function() {
     Cursor.prototype.preview = function(length) {
         if(length <= 0) throw new RangeError("length must be 1 or more");
         if(this.index + length > this.text.length) return null;
-        return this.text.substr(this.index, length);
+        return this.text.substr(this.index, length || 1);
     };
     Cursor.prototype.next = function(length) {
+        if(length === undefined) length = 1;
         if(length <= 0) return;
         if(this.index + length > this.text.length) return null;
         var text = this.preview(length);
@@ -40,12 +48,15 @@ var parsorama = (function() {
         if(!(tokens instanceof Map)) throw new TypeError("tokens argument must be a Map object");
         var regex = "";
         for(var token of tokens.keys()) {
-            regex += token + "|";
+            regex += escapeRegExp(token) + "|";
         }
         var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, -1)));
-        capture = new Captured(this, capture.index, capture[0]);
-        tokens.get(capture.token)(capture, arg);
-        this.index = capture.index + capture.token.length - 1;
+        if(capture) {
+            capture = new Captured(this, this.index + capture.index, capture[0]);
+            tokens.get(capture.token)(capture, arg);
+            capture.done();
+        }
+        return this;
     };
     Cursor.prototype.home = function() {
         this.index = 0;
@@ -63,6 +74,14 @@ var parsorama = (function() {
     Captured.prototype.take = function() {
         return this.parent.text.slice(this.parent.index, this.index);
     };
+    Captured.prototype.done = function() {
+        return this.parent.index = this.index + this.token.length;
+    }
+    Captured.prototype.find = function(tokens, arg) {
+        this.done();
+        this.parent.find(tokens, arg);
+        return this;
+    }
     function ScopeStack() {
         var stack = [];
         var current = null;
@@ -87,7 +106,8 @@ var parsorama = (function() {
             },
             current: {
                 get: function() {
-                    return current[stack.length - 1];
+                    var parent = stack[stack.length - 2];
+                    return parent[parent.length - 1];
                 }
             }
         });
