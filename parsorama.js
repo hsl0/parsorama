@@ -42,7 +42,7 @@ var parsorama = (function() {
         for(var token of tokens.keys()) {
             regex += token + "|";
         }
-        var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, 1)));
+        var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, -1)));
         capture = new Captured(this, capture.index, capture[0]);
         tokens.get(capture.token)(capture, arg);
         this.index = capture.index + capture.token.length - 1;
@@ -65,6 +65,20 @@ var parsorama = (function() {
     };
     function ScopeStack() {
         var stack = [];
+        var current = null;
+        this.begin = function() {
+            current = new Content();
+            stack.push(current);
+            return current;
+        };
+        this.done = function() {
+            current = stack[stack.length - 1] || null;
+            return stack.pop();
+        };
+        this.push = function(node) {
+            return current.push(node);
+        };
+        this.begin();
         Object.defineProperties(this, {
             depth: {
                 get: function() {
@@ -73,23 +87,11 @@ var parsorama = (function() {
             },
             current: {
                 get: function() {
-                    var cur = stack[stack.length - 1];
-                    return cur[stack.length - 1];
+                    return current[stack.length - 1];
                 }
             }
         });
-        this.begin = function() {
-            var content = new Content();
-            stack.push(content);
-            return content;
-        }
-        this.done = function() {
-            return stack.pop();
-        }
     }
-    ScopeStack.prototype.push = function(node) {
-        return this.current.push(node);
-    };
     function Transformer() {
         this.handlers = {};
     }
