@@ -267,11 +267,21 @@ var parsorama = (function() {
     Transformer.prototype.transform = function() {
         
     };
+    /**
+     * 내용 트리
+     * @class {Array}
+     * 
+     */
     function Content() {
         Array.apply(this);
     }
     Content.prototype = Object.create(Array.prototype);
     Content.prototype.constructor = Content;
+    /**
+     * 문자열로 변환
+     * @method
+     * @returns {string}
+     */
     Content.prototype.toString = function() {
         return this.join('');
     };
