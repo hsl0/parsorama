@@ -25,13 +25,14 @@ var parsorama = (function() {
      * @property {Tokens} tokens - 문법을 구성하는 토큰 모음
      * @property {function} parser - 문법 파서 함수 
      */
-    function Parser(nodes, tokens, parser) {
+    function Parser(nodes, tokens) {
         this.nodes = nodes || {}; // 요소
         this.tokens = new Map(tokens); // 토큰
-        this.parse = function(str) {
-            var cursor = new Cursor(str, this);
-            return parser(cursor) || cursor.done();
-        };
+    }
+    Parser.prototype.parse = function(str) {
+        var cursor = new Cursor(str, this);
+        cursor.find(this.tokens);
+        return cursor.end();
     }
     Parser.prototype.addTransformer = function(name, transformer) {
         this[name] = transformer.transform.bind(transformer);
@@ -274,6 +275,5 @@ var parsorama = (function() {
     Content.prototype.toString = function() {
         return this.join('');
     };
-    Parser.Cursor = Cursor;
-    return {Parser, Transformer, escapeRegExp};
+    return {Parser, Cursor, Transformer, escapeRegExp};
 })();
