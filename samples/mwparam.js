@@ -19,7 +19,7 @@
      */
     Parameter.prototype.toString = function() {
         return '{{{' + this.key + (this.default ? '|' + this.default : '') + '}}}';
-    }
+    };
     /**
      * 파라미터 문법에 사용되는 토큰
      */
@@ -43,5 +43,5 @@
         ['{{{', function(c) {
             c.begin(Parameter);
         }]
-    ])
+    ]));
 })();
