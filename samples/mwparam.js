@@ -5,7 +5,7 @@
     }
     Parameter.prototype.toString = function() {
         return '{{{' + this.key + (this.default ? '|' + this.default : '') + '}}}';
-    }
+    };
     Parameter.tokens = new Map([
         ['|', function(c) {
             var stack = c.parent.stack;
@@ -34,5 +34,5 @@
         }]
     ]), function(c) {
         c.find(c.parent.tokens);
-    });
+    }));
 })();
