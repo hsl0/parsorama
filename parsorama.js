@@ -32,7 +32,7 @@ var parsorama = (function() {
     Parser.prototype.parse = function(str) {
         var cursor = new Cursor(str, this);
         cursor.find(this.tokens);
-        return cursor.end();
+        return cursor.done();
     }
     Parser.prototype.addTransformer = function(name, transformer) {
         this[name] = transformer.transform.bind(transformer);
