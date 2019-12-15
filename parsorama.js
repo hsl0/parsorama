@@ -91,6 +91,7 @@ var parsorama = (function() {
      * @returns {Cursor} 메소드 체이닝 가능
      */
     Cursor.prototype.find = function(tokens, arg) {
+        if(tokens === undefined || tokens === null) tokens = this.parent.tokens;
         if(!(tokens instanceof Map)) throw new TypeError("tokens argument must be a Map object"); // tokens 파라미터 검증
 
         // 토큰을 찾을 정규표현식 생성
@@ -102,7 +103,7 @@ var parsorama = (function() {
         var capture = this.text.slice(this.index).match(new RegExp(regex.slice(0, -1))); // 토큰을 찾고 저장
         if(capture) { // 토큰을 찾을 때
             capture = new Captured(this, this.index + capture.index, capture[0]); // Captured 객체로 가공
-            tokens.get(capture.token)(capture, arg); // 핸들러 실행
+            tokens.get(capture.token).call(this.stack.current, capture, arg); // 핸들러 실행
             capture.done(); // 핸들링 종료 및 카운트
         }
         return this; // 메소드 체이닝

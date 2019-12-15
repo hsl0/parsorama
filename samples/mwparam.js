@@ -27,16 +27,16 @@
         ['|', function(c) {
             var stack = c.parent.stack; // 스택 저장소
             stack.push(c.take()); // 본문 수집
-            if(!stack.current.key) stack.current.key = stack.done(); // 키가 없으면 기존 계층 종료 및 키에 저장
+            if(!this.key) this.key = stack.done(); // 키가 없으면 기존 계층 종료 및 키에 저장
             stack.begin(); // 새 계층 시작
             c.find(Parameter.tokens); // 다음 토큰 검색
         }],
         ['}}}', function(c) {
             var stack = c.parent.stack; // 스택 저장소
             stack.push(c.take()); // 본문 수집
-            if (stack.current.key) stack.current.default = stack.done(); // 키가 있으면 기본값으로 저장
-            else stack.current.key = stack.done(); // 키가 없으면 키로 저장
-            c.find(c.parent.parent.tokens); // 다른 요소 토큰 검색
+            if (this.key) this.default = stack.done(); // 키가 있으면 기본값으로 저장
+            else this.key = stack.done(); // 키가 없으면 키로 저장
+            c.find(); // 다른 요소 토큰 검색
         }]
     ]);
     return new parsorama.Parser({Parameter}, new Map([
