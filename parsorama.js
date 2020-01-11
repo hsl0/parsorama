@@ -33,7 +33,7 @@ var parsorama = (function() {
         var cursor = new Cursor(str, this);
         cursor.find(this.tokens);
         return cursor.done();
-    }
+    };
     Parser.prototype.addTransformer = function(name, transformer) {
         this[name] = transformer.transform.bind(transformer);
         this[name].transformer = transformer;
@@ -155,7 +155,7 @@ var parsorama = (function() {
     Cursor.prototype.done = function() {
         while(this.stack.depth > 1) this.stack.push(this.stack.done()); // 하위 계층을 상위 계층에 넣는다.
         return this.stack.done();
-    }
+    };
     /**
      * 토큰 핸들러를 위한 커서 조작기
      * @class
@@ -193,7 +193,7 @@ var parsorama = (function() {
         stack.begin(); // 계층 시작
         this.find(tokens || node.tokens); // 다음 토큰 검색
         return this; // 메소드 체이닝
-    }
+    };
     /**
      * 토큰 핸들링 작업을 종료하고 토큰 위치를 커서 위치에 카운팅한다.
      * @method
@@ -201,7 +201,7 @@ var parsorama = (function() {
      */
     Captured.prototype.done = function() {
         return this.parent.index = this.index + this.token.length;
-    }
+    };
     /**
      * 토큰 핸들링 작업을 종료하고 다음 토큰을 찾는다.
      * @method
@@ -214,7 +214,7 @@ var parsorama = (function() {
         this.done();
         this.parent.find(tokens, arg);
         return this;
-    }
+    };
     /**
      * 작업 내용을 임시로 저장하는 스택 저장소
      * @class
