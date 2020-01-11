@@ -34,5 +34,5 @@
         }]
     ]), function(c) {
         c.find(c.parent.tokens);
-    }));
+    });
 })();
