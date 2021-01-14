@@ -1,6 +1,6 @@
-type FormExp = Form|RegExp|string|Repeat|Any;
+export type FormExp = Form|RegExp|string|Repeat|Any;
 
-export class Form extends Array {
+export class Form extends Array<FormExp> {
     constructor(...arr: FormExp[]|[FormExp[]]) {
         if(Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
 
@@ -18,26 +18,62 @@ export class Form extends Array {
         return new this(arr);
     }
 }
-export class Repeat {
-    start: number;
-    end: number;
-    content: FormExp;
 
-    constructor(form: FormExp, start: number, end: number) {
+export enum Quantitier {GREEDY, LAZY};
+
+export class Repeat {
+    min: number;
+    max: number;
+    content: FormExp;
+    quantitier: Quantitier;
+
+    constructor(form: FormExp, min: number, max: number, quantitier: Quantitier) {
         this.content = form;
-        this.start = start;
-        this.end = end || start;
+        this.min = min || 0;
+        this.max = max || min;
+        this.quantitier = quantitier;
     }
 }
 export class Optional extends Repeat {
-    constructor(form: FormExp) {
-        super(form, 0, 1);
+    constructor(form: FormExp, quantitier: Quantitier) {
+        super(form, 0, 1, quantitier);
     }
 }
+export {Optional as ZeroOne};
+export class OneMore extends Repeat {
+    constructor(form: FormExp, quantitier: Quantitier) {
+        super(form, 1, Infinity, quantitier);
+    }
+}
+export class ZeroMore extends Repeat {
+    constructor(form: FormExp, quantitier: Quantitier) {
+        super(form, 0, Infinity, quantitier);
+    }
+}
+export class Min extends Repeat {
+    constructor(form: FormExp, min: number, quantitier: Quantitier) {
+        super(form, min, Infinity, quantitier);
+    }
+}
+export class Max extends Repeat {
+    constructor(form: FormExp, max: number, quantitier: Quantitier) {
+        super(form, 0, max, quantitier);
+    }
+}
+
 export class Any extends Set {
     constructor(...forms: FormExp[]|[Iterable<FormExp>]) {
-        // @ts-ignore
-        super((forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms);
+        try {
+            // @ts-ignore
+            super((forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms);
+        } catch(err) {
+            if(err instanceof TypeError && err.message === "Constructor Set requires 'new'") {
+                return Reflect.construct(Set, [(forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms], new.target);
+            }
+        }
     }
 }
-debugger;
+
+export interface Tree extends Array<any> {
+    get(syntax: any): any;
+}
