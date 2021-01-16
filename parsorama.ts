@@ -1,13 +1,13 @@
-export type FormExp = Form|RegExp|string|Repeat|Any;
+export type FormExp = Form|RegExp|string|Repeat|Any|Syntax;
 
 export class Form extends Array<FormExp> {
     constructor(...arr: FormExp[]|[FormExp[]]) {
         if(Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
 
         super();
-        this.push(...arr);
+        super.push(...arr);
     }
-    static new(str: TemplateStringsArray, ...exp: FormExp[]) {
+    static new(str: TemplateStringsArray, ...exp: FormExp[]): Form {
         const arr = [];
 
         for(let index: number = 0; index < str.raw.length; index++) {
@@ -74,6 +74,25 @@ export class Any extends Set {
     }
 }
 
-export interface Tree extends Array<any> {
-    get(syntax: any): any;
+export class Content extends Array {
+    constructor(...args: any[]) {
+        super();
+        if(Array.isArray(args[0]) && args.length === 1) args === args[0];
+        super.push(...args);
+    }
+
+    toString() {
+        return this.join('');
+    }
+
+    static form(...args: [TemplateStringsArray, ...FormExp[]]|FormExp[]): Syntax {
+        return class extends this {
+            static format = (args[0] as TemplateStringsArray).raw? Form.new(...args as [TemplateStringsArray, ...FormExp[]]) : new Form(...args as FormExp[]);
+        } as Syntax;
+    }
+}
+
+export interface Syntax {
+    new(...args: any[]): any;
+    format: FormExp;
 }

@@ -12,8 +12,28 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spread = (this && this.__spread) || function () {
+    for (var ar = [], i = 0; i < arguments.length; i++) ar = ar.concat(__read(arguments[i]));
+    return ar;
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Any = exports.Max = exports.Min = exports.ZeroMore = exports.OneMore = exports.ZeroOne = exports.Optional = exports.Repeat = exports.Quantitier = exports.Form = void 0;
+exports.Content = exports.Any = exports.Max = exports.Min = exports.ZeroMore = exports.OneMore = exports.ZeroOne = exports.Optional = exports.Repeat = exports.Quantitier = exports.Form = void 0;
 var Form = /** @class */ (function (_super) {
     __extends(Form, _super);
     function Form() {
@@ -25,7 +45,7 @@ var Form = /** @class */ (function (_super) {
         if (Array.isArray(arr[0]) && arr.length === 1)
             arr = arr[0];
         _this = _super.call(this) || this;
-        _this.push.apply(_this, arr);
+        _super.prototype.push.apply(_this, __spread(arr));
         return _this;
     }
     Form.new = function (str) {
@@ -124,4 +144,39 @@ var Any = /** @class */ (function (_super) {
     return Any;
 }(Set));
 exports.Any = Any;
+var Content = /** @class */ (function (_super) {
+    __extends(Content, _super);
+    function Content() {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var _this = _super.call(this) || this;
+        if (Array.isArray(args[0]) && args.length === 1)
+            args === args[0];
+        _super.prototype.push.apply(_this, __spread(args));
+        return _this;
+    }
+    Content.prototype.toString = function () {
+        return this.join('');
+    };
+    Content.form = function () {
+        var _a;
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return _a = /** @class */ (function (_super) {
+                __extends(class_1, _super);
+                function class_1() {
+                    return _super !== null && _super.apply(this, arguments) || this;
+                }
+                return class_1;
+            }(this)),
+            _a.format = args[0].raw ? Form.new.apply(Form, __spread(args)) : new (Form.bind.apply(Form, __spread([void 0], args)))(),
+            _a;
+    };
+    return Content;
+}(Array));
+exports.Content = Content;
 //# sourceMappingURL=parsorama.js.map
