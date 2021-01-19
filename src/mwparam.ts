@@ -1,4 +1,4 @@
-import {FormExp, Form, Optional, Quantitier, Content, Syntax, ZeroMore} from '../parsorama';
+import {FormExp, Form, Optional, Quantitier, Content, Syntax, ZeroMore} from './parsorama';
 
 const Parameter: Syntax = (() => {
     const defaultValue = Content.form`.*`;
@@ -28,18 +28,19 @@ type Parameter = typeof Parameter;
 const Template: Syntax = (() => {
     const paramName = Content.form`.*`;
     const paramValue = Content.form`.*`;
-    const paramExp = Content.form`\s*|\s*(${paramName}\s*=\s*)?${paramValue}`;
     const templateName = Content.form`.*`;
 
     type Params = Array<{
         [key: string]: string|Content
     }|string|Content>;
 
-    class TemplateParams implements Map<string|number, Content> {
+    class TemplateParams {
+        static format = Form.new`\s*|\s*(${paramName}\s*=\s*)?${paramValue}`;
+
         protected raw: Array<[string|number, Content]|Content>;
         protected unnamed: Content[];
         protected registry: {[key: string]: Content};
-        dirty: boolean = false;
+        dirty = false;
 
         constructor(...params: Params|[Params]) {
             if(params.length === 1 && Array.isArray(params[0]) && !(params[0] instanceof Content)) params = params[0];
@@ -105,7 +106,7 @@ const Template: Syntax = (() => {
 
             return removed;
         }
-        forEach(callbackfn: (value: Content, key: string|number, context: this) => void, thisArg?: any): void {
+        forEach(callbackfn: (value: Content, key: string|number, context: this) => void, thisArg?): void {
             for(const [key, value] of this) callbackfn.call(thisArg, value, key, this);
         }
         get(key: string|number): Content {
@@ -121,8 +122,8 @@ const Template: Syntax = (() => {
         has(key: string|number): boolean {
             return key in this.registry || key in this.unnamed;
         }
-        set(key: string|number, value: Content): this {
-            if(!this.dirty) {
+        set(key: string|number, value: Content, clean = !this.dirty): this {
+            if(clean) {
                 for(let index = 0; index < this.raw.length; index++) {
                     const value = this.raw[index];
                     if(!(value instanceof Content) && Array.isArray(value)) {
@@ -139,11 +140,11 @@ const Template: Syntax = (() => {
 
             return this;
         }
-        push(value: Content): number {
+        push(value: Content, clean = !this.dirty): number {
             this.raw.push(value);
             const index = this.unnamed.push(value);
 
-            if(!this.dirty) {
+            if(clean) {
                 const key = index;
                 for(let index = 0; index < this.raw.length; index++) {
                     const value = this.raw[index];
@@ -169,7 +170,7 @@ const Template: Syntax = (() => {
         }
         get size(): number {
             return this.raw.length;
-        };
+        }
         *[Symbol.iterator](): IterableIterator<[string|number, Content]> {
             yield* this.entries();
         }
@@ -192,7 +193,16 @@ const Template: Syntax = (() => {
             }
         }
         export(): {[key: string]: Content} {
-            return Object.assign({}, this.registry);
+            return {...this.registry};
+        }
+        exportUnnamed(): Content[] {
+            return [...this.unnamed];
+        }
+        exportRaw(): Array<[string|number, Content]|Content> {
+            return this.raw.map(value => {
+                if(value instanceof Content) return value;
+                else if(Array.isArray(value)) return [...value];
+            });
         }
         toString() {
             let content = '';
@@ -203,11 +213,11 @@ const Template: Syntax = (() => {
             }
             return content;
         }
-        [Symbol.toStringTag]: string = 'Params';
+        [Symbol.toStringTag] = 'Params';
     }
 
     return class Template {
-        static format: FormExp = Form.new`{{\s*${templateName}${new ZeroMore(paramExp, Quantitier.LAZY)}\s*}}`;
+        static format: FormExp = Form.new`{{\s*${templateName}${new ZeroMore(TemplateParams, Quantitier.LAZY)}\s*}}`;
 
         name: string;
         params: TemplateParams;
@@ -222,8 +232,9 @@ const Template: Syntax = (() => {
         toString() {
             return `{{${this.name}${this.params}}}`;
         }
-    }
+    } as Syntax;
 })();
 type Template = typeof Template;
 
+// eslint-disable-next-line no-debugger
 debugger;

@@ -5,11 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch Edge",
+            "request": "launch",
+            "type": "pwa-msedge",
+            "url": "${workspaceFolder}\\test\\test.html",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "npm: build",
+            "outFiles": ["${workspaceFolder}\\bin\\**\\*.js"]
+        },
+        {
+            "name": "Attach to Edge",
+            "port": 9222,
+            "request": "attach",
+            "type": "pwa-msedge",
+            "webRoot": "${workspaceFolder}",
+            "preLaunchTask": "npm: build",
+            "outFiles": ["${workspaceFolder}\\bin\\**\\*.js"]
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
-            "preLaunchTask": "tsc: 빌드 - tsconfig.json",
-            "outFiles": ["${workspaceFolder}\\out\\**\\*.js"],
+            "preLaunchTask": "npm: build",
+            "outFiles": ["${workspaceFolder}\\bin\\**\\*.js"],
             "program": "${file}"
         }
     ]

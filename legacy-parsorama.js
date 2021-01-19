@@ -13,7 +13,7 @@ var parsorama = (function() {
      * @param {!string} s - 이스케이프할 문자열
      */
     function escapeRegExp(s) {
-        return s.replace(/[\-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+        return s.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
     }
     /**
      * 문법 파서
@@ -264,6 +264,7 @@ var parsorama = (function() {
         this.handlers[node].push(handler);
         return this;
     };
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     Transformer.prototype.transform = function() {
         
     };

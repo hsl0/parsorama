@@ -10,7 +10,7 @@ export class Form extends Array<FormExp> {
     static new(str: TemplateStringsArray, ...exp: FormExp[]): Form {
         const arr = [];
 
-        for(let index: number = 0; index < str.raw.length; index++) {
+        for(let index = 0; index < str.raw.length; index++) {
             arr.push(str.raw[index]);
             if(index in exp) arr.push(exp[index]);
         }
@@ -19,7 +19,7 @@ export class Form extends Array<FormExp> {
     }
 }
 
-export enum Quantitier {GREEDY, LAZY};
+export enum Quantitier {GREEDY, LAZY}
 
 export class Repeat {
     min: number;
@@ -64,6 +64,7 @@ export class Max extends Repeat {
 export class Any extends Set {
     constructor(...forms: FormExp[]|[Iterable<FormExp>]) {
         try {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
             super((forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms);
         } catch(err) {
@@ -75,13 +76,13 @@ export class Any extends Set {
 }
 
 export class Content extends Array {
-    constructor(...args: any[]) {
+    constructor(...args: unknown[]) {
         super();
         if(Array.isArray(args[0]) && args.length === 1) args === args[0];
         super.push(...args);
     }
 
-    toString() {
+    toString(): string {
         return this.join('');
     }
 
@@ -93,6 +94,9 @@ export class Content extends Array {
 }
 
 export interface Syntax {
-    new(...args: any[]): any;
+    new(...args: unknown[]);
     format: FormExp;
 }
+
+// eslint-disable-next-line no-debugger
+debugger;
