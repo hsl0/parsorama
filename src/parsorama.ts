@@ -7,6 +7,30 @@ export class Form extends Array<FormExp> {
         super();
         super.push(...arr);
     }
+    
+    parse(content: string): Content {
+      if(typeof string !== 'string') throw new TypeError('Content is not string');
+      
+      const tree = new Content();
+      
+      for(let part of this) {
+        if(typeof part === 'string')  part = new RegExp(`^${part}`);
+        else if(part instanceof RegExp) {
+          part = String(part).match(/^\/(.*)\/(\w*)$/);
+          part = new RegExp(`^${part[1]}`, part[2]);
+        } else throw new TypeError('Wrong form expression included');
+        
+        let match = content.match(part);
+        if(match) match = match[0];
+        else throw new TypeError('Given content does not match with form');
+        
+        tree.push(match);
+        content = content.slice(match.length);
+      }
+      
+      return tree;
+    }
+    
     static new(str: TemplateStringsArray, ...exp: FormExp[]): Form {
         const arr = [];
 
