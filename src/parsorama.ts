@@ -117,9 +117,13 @@ export class Content extends Array {
     }
 }
 
-export interface Syntax {
-    new(...args: unknown[]);
-    format: FormExp;
+export abstract class Syntax {
+  static format: FormExp;
+  
+  abstract static parseTree: (tree: Content) => Syntax;
+  static parse(content: string): Syntax {
+    return this.parseTree(this.format.parse(content));
+  }
 }
 
 // eslint-disable-next-line no-debugger
