@@ -1,0 +1,49 @@
+{
+  "name": "parsorama",
+  "version": "0.1.0",
+  "description": "parser developing tool",
+  "main": "dist/node/parsorama.js",
+  "browser": "dist/web.js",
+  "types": "dist/parsorama.d.ts",
+  "directories": {
+    "lib": "src"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^4.14.1",
+    "@typescript-eslint/parser": "^4.14.1",
+    "eslint": "^7.19.0",
+    "eslint-webpack-plugin": "^2.4.3",
+    "source-map-loader": "^2.0.0",
+    "ts-loader": "^8.0.14",
+    "typescript": "^4.1.3",
+    "webpack": "^5.19.0",
+    "webpack-cli": "^4.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . --ext .ts --fix",
+    "build": "(npm run lint && (tsc & tsc -p tsconfig-commonjs.json)) & webpack",
+    "build-harmony": "npm run lint && tsc",
+    "build-node": "npm run lint && tsc -p tsconfig-commonjs.json",
+    "build-web": "webpack",
+    "build-web-dev": "webpack --mode development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hsl0/parsorama.git"
+  },
+  "keywords": [
+    "parser"
+  ],
+  "author": "hsl0",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/hsl0/parsorama/issues"
+  },
+  "homepage": "https://github.com/hsl0/parsorama#readme",
+  "optionalDependencies": {
+    "@babel/core": "^7.12.10",
+    "babel-loader": "^8.2.2"
+  }
+}
