@@ -1,4 +1,4 @@
-import {FormExp, Form, Optional, Quantitier, Content, Syntax, ZeroMore} from './parsorama';
+import {FormExp, Form, Optional, Quantitier, Content, Syntax, ZeroMore} from './parsorama.js';
 
 const Parameter: Syntax = (() => {
     const defaultValue = Content.form`.*`;

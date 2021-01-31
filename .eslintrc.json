@@ -20,13 +20,13 @@
     },
     "overrides": [
         {
-            "files": "webpack.config.js",
+            "files": "webpack.*.js",
             "rules": {
                 "@typescript-eslint/no-var-requires": "off"
             }
         }
     ],
     "ignorePatterns": [
-        "bin/**"
+        "dist/**"
     ]
 }

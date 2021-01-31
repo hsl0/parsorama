@@ -2,10 +2,11 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 const path = require('path');
 
 const config = {
-    entry: './src/parsorama.ts',
+    entry: './src/web.js',
+    mode: 'production',
     output: {
-        path: path.resolve(__dirname, 'bin'),
-        filename: 'parsorama.js'
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'web.js'
     },
     module: {
         rules: [
@@ -28,7 +29,7 @@ const config = {
             extensions: ['js', 'ts'],
         })
     ],
-    devtool: 'inline-source-map'
+    devtool: 'source-map'
 };
 
 module.exports = config;

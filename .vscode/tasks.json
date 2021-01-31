@@ -3,12 +3,35 @@
 	"tasks": [
 		{
 			"type": "npm",
-			"script": "build",
+			"script": "build-node",
 			"group": "build",
 			"problemMatcher": [
-				"$tsc"
+				"$tsc",
+				"$eslint-compact"
+			],
+			"label": "npm: build node",
+			"detail": "tsc"
+		},
+		{
+			"type": "npm",
+			"script": "build-harmony",
+			"group": "build",
+			"problemMatcher": [
+				"$tsc",
+				"$eslint-compact"
 			],
 			"label": "npm: build",
+			"detail": "tsc"
+		},
+		{
+			"type": "npm",
+			"script": "build-web-dev",
+			"group": "build",
+			"problemMatcher": [
+				"$tsc",
+				"$eslint-compact"
+			],
+			"label": "npm: build web",
 			"detail": "tsc"
 		}
 	]

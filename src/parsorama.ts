@@ -1,36 +1,34 @@
-export type FormExp = Form|RegExp|string|Repeat|Any|Syntax;
+export type FormExp = Form | RegExp | string | Repeat | Any | Syntax;
 
 export class Form extends Array<FormExp> {
-    constructor(...arr: FormExp[]|[FormExp[]]) {
+    constructor(...arr: FormExp[] | [FormExp[]]) {
         if(Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
 
         super();
-        super.push(...arr);
+        super.push(...arr as FormExp[]);
     }
-    
+
     parse(content: string): Content {
-      if(typeof string !== 'string') throw new TypeError('Content is not string');
-      
-      const tree = new Content();
-      
-      for(let part of this) {
-        if(typeof part === 'string')  part = new RegExp(`^${part}`);
-        else if(part instanceof RegExp) {
-          part = String(part).match(/^\/(.*)\/(\w*)$/);
-          part = new RegExp(`^${part[1]}`, part[2]);
-        } else throw new TypeError('Wrong form expression included');
-        
-        let match = content.match(part);
-        if(match) match = match[0];
-        else throw new TypeError('Given content does not match with form');
-        
-        tree.push(match);
-        content = content.slice(match.length);
-      }
-      
-      return tree;
+        if(typeof content !== 'string') throw new TypeError('Content is not string');
+
+        const tree = new Content();
+
+        for(let part of this) {
+            if(typeof part === 'string') part = new RegExp(`^${part}`);
+            else if(part instanceof RegExp) {
+                const body = String(part).match(/^\/(.*)\/(\w*)$/);
+                part = new RegExp(`^${body[1]}`);
+            } else throw new TypeError('Wrong form expression included');
+
+            const match = (content.match(part) as string[])[0];
+
+            tree.push(match);
+            content = content.slice(match.length);
+        }
+
+        return tree;
     }
-    
+
     static new(str: TemplateStringsArray, ...exp: FormExp[]): Form {
         const arr = [];
 
@@ -86,14 +84,13 @@ export class Max extends Repeat {
 }
 
 export class Any extends Set {
-    constructor(...forms: FormExp[]|[Iterable<FormExp>]) {
+    constructor(...forms: FormExp[] | [Iterable<FormExp>]) {
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
+            // @ts-expect-error Iterable<FormExp> can't be assigned to readonly any[]
             super((forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms);
         } catch(err) {
             if(err instanceof TypeError && err.message === "Constructor Set requires 'new'") {
-                return Reflect.construct(Set, [(forms.length === 1 && forms[0][Symbol.iterator])? forms[0] : forms], new.target);
+                return Reflect.construct(Set, [(forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms], new.target);
             }
         }
     }
@@ -110,9 +107,9 @@ export class Content extends Array {
         return this.join('');
     }
 
-    static form(...args: [TemplateStringsArray, ...FormExp[]]|FormExp[]): Syntax {
+    static form(...args: [TemplateStringsArray, ...FormExp[]] | FormExp[]): Syntax {
         return class extends this {
-            static format = (args[0] as TemplateStringsArray).raw? Form.new(...args as [TemplateStringsArray, ...FormExp[]]) : new Form(...args as FormExp[]);
+            static format = (args[0] as TemplateStringsArray).raw? Form.new(...args as[TemplateStringsArray, ...FormExp[]]) : new Form(...args as FormExp[]);
         } as Syntax;
     }
 }

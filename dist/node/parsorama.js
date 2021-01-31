@@ -8,6 +8,25 @@ class Form extends Array {
         super();
         super.push(...arr);
     }
+    parse(content) {
+        if (typeof content !== 'string')
+            throw new TypeError('Content is not string');
+        const tree = new Content();
+        for (let part of this) {
+            if (typeof part === 'string')
+                part = new RegExp(`^${part}`);
+            else if (part instanceof RegExp) {
+                const body = String(part).match(/^\/(.*)\/(\w*)$/);
+                part = new RegExp(`^${body[1]}`);
+            }
+            else
+                throw new TypeError('Wrong form expression included');
+            const match = content.match(part)[0];
+            tree.push(match);
+            content = content.slice(match.length);
+        }
+        return tree;
+    }
     static new(str, ...exp) {
         const arr = [];
         for (let index = 0; index < str.raw.length; index++) {
@@ -67,8 +86,7 @@ exports.Max = Max;
 class Any extends Set {
     constructor(...forms) {
         try {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
+            // @ts-expect-error Iterable<FormExp> can't be assigned to readonly any[]
             super((forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms);
         }
         catch (err) {

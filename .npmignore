@@ -1,4 +1,12 @@
+.gitignore
+.npmignore
 .vscode/
+.eslintrc.json
+webpack.config.js
+tsconfig-commonjs.json
+tsconfig.json
+test/
+src/
 
 ## nodeJS
 # Logs
