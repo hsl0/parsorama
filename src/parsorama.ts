@@ -1,5 +1,7 @@
 export type FormExp = Form|RegExp|string|Repeat|Any|Syntax;
 
+function extractRegEx()
+
 export class Form extends Array<FormExp> {
     constructor(...arr: FormExp[]|[FormExp[]]) {
         if(Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
@@ -8,6 +10,19 @@ export class Form extends Array<FormExp> {
         super.push(...arr);
     }
     
+    toRegExp(): RegExp {
+      let regex = '';
+      for(let part of this) {
+        if(typeof part === 'string') regex += part;
+        else if(part instanceof RegExp) {
+          part = String(part).match(/^\/(.*)\/(\w*)$/);
+          regex += `(${part[1]})`;
+        } else if(part instanceof Form) {
+          part = String(part.toRegExp()).match(/^\/(.*)\/(\w*)$/);
+          regex += `(${part[1]})`;
+        }
+      }
+    }
     parse(content: string): Content {
       if(typeof string !== 'string') throw new TypeError('Content is not string');
       
@@ -18,6 +33,8 @@ export class Form extends Array<FormExp> {
         else if(part instanceof RegExp) {
           part = String(part).match(/^\/(.*)\/(\w*)$/);
           part = new RegExp(`^${part[1]}`, part[2]);
+        } else if(part instanceof Form) {
+          
         } else throw new TypeError('Wrong form expression included');
         
         let match = content.match(part);
