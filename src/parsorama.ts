@@ -1,6 +1,13 @@
 export type FormExp = Form | RegExp | string | Repeat | Any | Syntax;
 
-export class Form extends Array < FormExp > {
+class InternalError extends Error {
+  constructor(...arr) {
+    super(...arr);
+    this.name = 'ParsoramaInternalError';
+  }
+}
+
+export class Form extends Array <FormExp> {
     constructor(...arr: FormExp[] | [FormExp[]]) {
         if (Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
 
@@ -26,9 +33,9 @@ export class Form extends Array < FormExp > {
 
         const tree = new Content();
 
-        for (let part of this) {
-            if (typeof part === 'string') part = new RegExp(`^${part}`);
-            else if (part instanceof RegExp) {
+        for(let part of this) {
+            if(typeof part === 'string') part = new RegExp(`^${part}`);
+            else if(part instanceof RegExp) {
                 const body = String(part).match(/^\/(.*)\/(\w*)$/);
                 part = new RegExp(`^${body[1]}`);
             } else throw new TypeError('Wrong form expression included');
