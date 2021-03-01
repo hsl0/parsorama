@@ -24,7 +24,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts --fix",
     "build": "(npm run lint && (tsc & tsc -p tsconfig-commonjs.json)) & webpack",
-    "build-harmony": "npm run lint && tsc",
+    "build-ecma": "npm run lint && tsc",
     "build-node": "npm run lint && tsc -p tsconfig-commonjs.json",
     "build-web": "webpack",
     "build-web-dev": "webpack --mode development"

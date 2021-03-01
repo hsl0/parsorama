@@ -7,6 +7,19 @@ class InternalError extends Error {
   }
 }
 
+module FormExp {
+    export function parse(part, content) {
+       if(part instanceof Repeat) return part.parse(content);
+        
+        if(part instanceof Any) return part.parse(content);
+        
+        if(part instanceof Syntax) return part.parse(content);
+        
+        part = new RegExp(`^${part}`);
+        return (content.match(part as RegExp) as string[])[0];
+    }
+}
+
 export class Form extends Array <FormExp> {
     constructor(...arr: FormExp[] | [FormExp[]]) {
         if (Array.isArray(arr[0]) && arr.length === 1) arr = arr[0];
@@ -29,19 +42,12 @@ export class Form extends Array <FormExp> {
         }
     }
     parse(content: string): Content {
-        if (typeof content !== 'string') throw new TypeError('Content is not string');
+        if(typeof content !== 'string') throw new TypeError('Content is not string');
 
         const tree = new Content();
 
-        for(let part of this) {
-            if(typeof part === 'string') part = new RegExp(`^${part}`);
-            else if(part instanceof RegExp) {
-                const body = String(part).match(/^\/(.*)\/(\w*)$/);
-                part = new RegExp(`^${body[1]}`);
-            } else throw new TypeError('Wrong form expression included');
-
-            const match = (content.match(part as RegExp) as string[])[0];
-
+        for(const part of this) {
+            const match = FormExp.parse(part, content)
             tree.push(match);
             content = content.slice(match.length);
         }
@@ -78,6 +84,19 @@ export class Repeat {
         this.max = max || min;
         this.quantitier = quantitier;
     }
+    
+    parse(content: string, count? = 0) {
+        if(count >= this.max) return content;
+        
+        const match: Content | string = FormExp.parse(this.content, content);
+        
+        if(count < this.min) throw new TypeError("Given content doesn't match with format");
+        
+        content = content.slice(match.toString().length);
+        
+        if(typeof match === 'string') return match + this.parse(content, ++count);
+        else new Content(match, ...this.parse(content, ++count));
+    }
 }
 export class Optional extends Repeat {
     constructor(form: FormExp, quantitier: Quantitier) {
@@ -109,7 +128,7 @@ export class Max extends Repeat {
 }
 
 export class Any extends Set {
-    constructor(...forms: FormExp[] | [Iterable < FormExp > ]) {
+    constructor(...forms: FormExp[] | [Iterable<FormExp>]) {
         try {
             // @ts-expect-error Iterable<FormExp> can't be assigned to readonly any[]
             super((forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms);
@@ -118,6 +137,14 @@ export class Any extends Set {
                 return Reflect.construct(Set, [(forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms], new.target);
             }
         }
+    }
+    
+    parse(content: string) {
+        for(const form of this) {
+            const match = FormExp.parse(form, content);
+            if(match) return match;
+        }
+        throw new TypeError("Given content doesn't match with format")
     }
 }
 
