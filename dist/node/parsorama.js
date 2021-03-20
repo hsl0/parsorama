@@ -1,6 +1,28 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Content = exports.Any = exports.Max = exports.Min = exports.ZeroMore = exports.OneMore = exports.ZeroOne = exports.Optional = exports.Repeat = exports.Quantitier = exports.Form = void 0;
+exports.Syntax = exports.Content = exports.Any = exports.Max = exports.Min = exports.ZeroMore = exports.OneMore = exports.ZeroOne = exports.Optional = exports.Repeat = exports.Quantitier = exports.Form = void 0;
+class InternalError extends Error {
+    constructor(...arr) {
+        super(...arr);
+        this.name = 'ParsoramaInternalError';
+    }
+}
+var FormExp;
+(function (FormExp) {
+    function parse(part, content) {
+        if (part instanceof Repeat)
+            return part.parse(content);
+        if (part instanceof Any)
+            return part.parse(content);
+        if (part instanceof Object && 'parse' in part)
+            return part.parse(content);
+        if (typeof part === 'string') {
+            part = new RegExp(`^${part}`);
+            return content.match(part)[0];
+        }
+    }
+    FormExp.parse = parse;
+})(FormExp || (FormExp = {}));
 class Form extends Array {
     constructor(...arr) {
         if (Array.isArray(arr[0]) && arr.length === 1)
@@ -12,16 +34,8 @@ class Form extends Array {
         if (typeof content !== 'string')
             throw new TypeError('Content is not string');
         const tree = new Content();
-        for (let part of this) {
-            if (typeof part === 'string')
-                part = new RegExp(`^${part}`);
-            else if (part instanceof RegExp) {
-                const body = String(part).match(/^\/(.*)\/(\w*)$/);
-                part = new RegExp(`^${body[1]}`);
-            }
-            else
-                throw new TypeError('Wrong form expression included');
-            const match = content.match(part)[0];
+        for (const part of this) {
+            const match = FormExp.parse(part, content);
             tree.push(match);
             content = content.slice(match.length);
         }
@@ -49,6 +63,18 @@ class Repeat {
         this.min = min || 0;
         this.max = max || min;
         this.quantitier = quantitier;
+    }
+    parse(content, count = 0) {
+        if (count >= this.max)
+            return content;
+        const match = FormExp.parse(this.content, content);
+        if (count < this.min)
+            throw new TypeError("Given content doesn't match with format");
+        content = content.slice(match.toString().length);
+        if (typeof match === 'string')
+            return match + this.parse(content, ++count);
+        else
+            new Content(match, ...this.parse(content, ++count));
     }
 }
 exports.Repeat = Repeat;
@@ -95,6 +121,14 @@ class Any extends Set {
             }
         }
     }
+    parse(content) {
+        for (const form of this) {
+            const match = FormExp.parse(form, content);
+            if (match)
+                return match;
+        }
+        throw new TypeError("Given content doesn't match with format");
+    }
 }
 exports.Any = Any;
 class Content extends Array {
@@ -110,12 +144,25 @@ class Content extends Array {
     static form(...args) {
         var _a;
         return _a = class extends this {
+                static parse(content) {
+                    if (!(this.format instanceof Form))
+                        this.format = new Form(this.format);
+                    return this.parseTree(this.format.parse(content));
+                }
             },
             _a.format = args[0].raw ? Form.new(...args) : new Form(...args),
             _a;
     }
 }
 exports.Content = Content;
+class Syntax {
+    static parse(content) {
+        if (!(this.format instanceof Form))
+            this.format = new Form(this.format);
+        return this.parseTree(this.format.parse(content));
+    }
+}
+exports.Syntax = Syntax;
 // eslint-disable-next-line no-debugger
 debugger;
 //# sourceMappingURL=parsorama.js.map

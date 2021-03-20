@@ -1,4 +1,4 @@
-export type FormExp = Form | RegExp | string | Repeat | Any | Syntax;
+export type FormExp = Form | RegExp | string | Repeat | Any | SyntaxConstructor;
 
 class InternalError extends Error {
   constructor(...arr) {
@@ -7,16 +7,18 @@ class InternalError extends Error {
   }
 }
 
-module FormExp {
-    export function parse(part, content) {
-       if(part instanceof Repeat) return part.parse(content);
+namespace FormExp {
+    export function parse(part: FormExp, content: string): string|Syntax {
+        if(part instanceof Repeat) return part.parse(content);
         
         if(part instanceof Any) return part.parse(content);
         
-        if(part instanceof Syntax) return part.parse(content);
+        if(part instanceof Object && 'parse' in part) return part.parse(content);
         
-        part = new RegExp(`^${part}`);
-        return (content.match(part as RegExp) as string[])[0];
+        if(typeof part === 'string') {
+            part = new RegExp(`^${part}`);
+            return (content.match(part as RegExp) as string[])[0];
+        }
     }
 }
 
@@ -28,19 +30,6 @@ export class Form extends Array <FormExp> {
         super.push(...arr as FormExp[]);
     }
 
-    toRegExp(): void/*RegExp*/ {
-        let regex = '';
-        for (let part of this) {
-            if (typeof part === 'string') regex += part;
-            else if (part instanceof RegExp) {
-                part = String(part).match(/^\/(.*)\/(\w*)$/);
-                regex += `(${part[1]})`;
-            } else if (part instanceof Form) {
-                part = String(part.toRegExp()).match(/^\/(.*)\/(\w*)$/);
-                regex += `(${part[1]})`;
-            }
-        }
-    }
     parse(content: string): Content {
         if(typeof content !== 'string') throw new TypeError('Content is not string');
 
@@ -49,7 +38,7 @@ export class Form extends Array <FormExp> {
         for(const part of this) {
             const match = FormExp.parse(part, content)
             tree.push(match);
-            content = content.slice(match.length);
+            content = content.slice((match as string).length);
         }
 
         return tree;
@@ -85,10 +74,10 @@ export class Repeat {
         this.quantitier = quantitier;
     }
     
-    parse(content: string, count? = 0) {
+    parse(content: string, count = 0): string|Content {
         if(count >= this.max) return content;
         
-        const match: Content | string = FormExp.parse(this.content, content);
+        const match: Syntax | string = FormExp.parse(this.content, content);
         
         if(count < this.min) throw new TypeError("Given content doesn't match with format");
         
@@ -159,10 +148,16 @@ export class Content extends Array {
         return this.join('');
     }
 
-    static form(...args: [TemplateStringsArray, ...FormExp[]] | FormExp[]): Syntax {
+    static form(...args: [TemplateStringsArray, ...FormExp[]] | FormExp[]): SyntaxConstructor {
         return class extends this {
             static format = (args[0] as TemplateStringsArray).raw ? Form.new(...args as[TemplateStringsArray, ...FormExp[]]) : new Form(...args as FormExp[]);
-        } as Syntax;
+
+            static parseTree: (tree: Content) => Syntax;
+            static parse(content: string): Syntax {
+                if (!(this.format instanceof Form)) this.format = new Form(this.format);
+                return this.parseTree((this.format as Form).parse(content));
+            }
+        };
     }
 }
 
@@ -174,6 +169,12 @@ export abstract class Syntax {
         if(!(this.format instanceof Form)) this.format = new Form(this.format);
         return this.parseTree((this.format as Form).parse(content));
     }
+}
+interface SyntaxConstructor {
+    new (...args: unknown[]): Syntax;
+    format: FormExp;
+    parseTree(tree: Content): Syntax;
+    parse(content: string): Syntax;
 }
 
 // eslint-disable-next-line no-debugger

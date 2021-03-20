@@ -1,27 +1,41 @@
-import {FormExp, Form, Optional, Quantitier, Content, Syntax, ZeroMore} from './parsorama.js';
+import {
+    FormExp,
+    Form,
+    Optional,
+    Quantitier,
+    Content,
+    Syntax,
+    ZeroMore,
+} from './parsorama';
 
 const Parameter: Syntax = (() => {
     const defaultValue = Content.form`.*`;
     const defaultExp = Content.form`\|\s*${defaultValue}`;
     const paramName = Content.form`.*`;
 
-    return class Parameter {
-        static format: FormExp = Form.new`{{{\s*${paramName}\s*${new Optional(defaultExp, Quantitier.LAZY)}(?:\s*\|\s*.*)*\s*}}}`;
+    return class Parameter extends Syntax {
+        static format: FormExp = Form.new`{{{\s*${paramName}\s*${new Optional(
+            defaultExp,
+            Quantitier.LAZY,
+        )}(?:\s*\|\s*.*)*\s*}}}`;
 
         name: string;
+
         default?: Content;
 
-        constructor(name: string, def?: Content|string) {
-            if(typeof name !== 'string') throw new TypeError('올바른 변수명이 지정되지 않았습니다');
+        constructor(name: string, def?: Content | string) {
+            if(typeof name !== 'string') { throw new TypeError('올바른 변수명이 지정되지 않았습니다'); }
 
+            super();
+            
             this.name = name;
-            this.default = (def === undefined)? null : new Content(def);
+            this.default = def === undefined ? null : new Content(def);
         }
-        
+
         toString() {
-            return `{{{${this.name}${this.default? `|${this.default}` : ''}}}}`;
+            return `{{{${this.name}${this.default ? `|${this.default}` : ''}}}}`;
         }
-    }
+    };
 })();
 type Parameter = typeof Parameter;
 
@@ -30,28 +44,37 @@ const Template: Syntax = (() => {
     const paramValue = Content.form`.*`;
     const templateName = Content.form`.*`;
 
-    type Params = Array<{
-        [key: string]: string|Content
-    }|string|Content>;
+    type Params = Array<
+        | {
+              [key: string]: string | Content;
+          }
+        | string
+        | Content
+    >;
 
-    class TemplateParams {
+    class TemplateParams extends Syntax {
         static format = Form.new`\s*|\s*(${paramName}\s*=\s*)?${paramValue}`;
 
-        protected raw: Array<[string|number, Content]|Content>;
+        protected raw: Array<[string | number, Content] | Content>;
+
         protected unnamed: Content[];
-        protected registry: {[key: string]: Content};
+
+        protected registry: { [key: string]: Content };
+
         dirty = false;
 
-        constructor(...params: Params|[Params]) {
-            if(params.length === 1 && Array.isArray(params[0]) && !(params[0] instanceof Content)) params = params[0];
+        constructor(...params: Params | [Params]) {
+            super();
+
+            if(params.length === 1 && (Array.isArray(params[0]) && !(params[0] instanceof Content))) params = params[0];
 
             const named = [];
 
             this.raw = [];
             this.unnamed = [];
             this.registry = {};
-            
-            (params as Params).forEach(value => {
+
+            (params as Params).forEach((value) => {
                 if(typeof value === 'string') {
                     const val = new Content(value);
                     this.raw.push(val);
@@ -64,11 +87,13 @@ const Template: Syntax = (() => {
                 } else if(Array.isArray(value)) {
                     this.raw.push(value);
                     named.push(value);
-                } else if(typeof value === 'object') for(const key in value) {
-                    let val = value[key];
-                    if(!(val instanceof Content)) val = new Content(val);
-                    this.raw.push([key, val]);
-                    named.push([key, val]);
+                } else if(typeof value === 'object') {
+                    for(const key in value) {
+                        let val = value[key];
+                        if(!(val instanceof Content)) val = new Content(val);
+                        this.raw.push([key, val]);
+                        named.push([key, val]);
+                    }
                 } else throw new TypeError('파라미터에 잘못된 값이 입력되었습니다');
             });
 
@@ -82,7 +107,8 @@ const Template: Syntax = (() => {
             this.unnamed = [];
             this.registry = {};
         }
-        delete(key: string|number): boolean {
+
+        delete(key: string | number): boolean {
             let removed = false;
 
             for(let index = 0; index < this.raw.length; index++) {
@@ -106,23 +132,35 @@ const Template: Syntax = (() => {
 
             return removed;
         }
-        forEach(callbackfn: (value: Content, key: string|number, context: this) => void, thisArg?): void {
+
+        forEach(
+            callbackfn: (
+                value: Content,
+                key: string | number,
+                context: this,
+            ) => void,
+            thisArg?,
+        ): void {
             for(const [key, value] of this) callbackfn.call(thisArg, value, key, this);
         }
-        get(key: string|number): Content {
+
+        get(key: string | number): Content {
             return this.registry[key];
         }
-        getAll(target: string|number): Content[] {
+
+        getAll(target: string | number): Content[] {
             const res = [];
 
             for(const [key, value] of this) if(key == target) res.push(value);
 
             return res;
         }
-        has(key: string|number): boolean {
+
+        has(key: string | number): boolean {
             return key in this.registry || key in this.unnamed;
         }
-        set(key: string|number, value: Content, clean = !this.dirty): this {
+
+        set(key: string | number, value: Content, clean = !this.dirty): this {
             if(clean) {
                 for(let index = 0; index < this.raw.length; index++) {
                     const value = this.raw[index];
@@ -140,6 +178,7 @@ const Template: Syntax = (() => {
 
             return this;
         }
+
         push(value: Content, clean = !this.dirty): number {
             this.raw.push(value);
             const index = this.unnamed.push(value);
@@ -168,67 +207,81 @@ const Template: Syntax = (() => {
 
             return index;
         }
+
         get size(): number {
             return this.raw.length;
         }
-        *[Symbol.iterator](): IterableIterator<[string|number, Content]> {
+
+        * [Symbol.iterator](): IterableIterator<[string | number, Content]> {
             yield* this.entries();
         }
-        *entries(): IterableIterator<[string|number, Content]> {
+
+        * entries(): IterableIterator<[string | number, Content]> {
             for(const value of this.raw) {
                 if(value instanceof Content) yield [this.raw.indexOf(value), value];
                 else if(Array.isArray(value)) yield [...value];
             }
         }
-        *keys(): IterableIterator<string|number> {
+
+        * keys(): IterableIterator<string | number> {
             for(const value of this.raw) {
                 if(value instanceof Content) yield this.raw.indexOf(value);
                 else if(Array.isArray(value)) yield value[0];
             }
         }
-        *values(): IterableIterator<Content> {
+
+        * values(): IterableIterator<Content> {
             for(const value of this.raw) {
                 if(value instanceof Content) yield value;
                 else if(Array.isArray(value)) yield value[1];
             }
         }
-        export(): {[key: string]: Content} {
-            return {...this.registry};
+
+        export(): { [key: string]: Content } {
+            return { ...this.registry };
         }
+
         exportUnnamed(): Content[] {
             return [...this.unnamed];
         }
-        exportRaw(): Array<[string|number, Content]|Content> {
-            return this.raw.map(value => {
+
+        exportRaw(): Array<[string | number, Content] | Content> {
+            return this.raw.map((value) => {
                 if(value instanceof Content) return value;
-                else if(Array.isArray(value)) return [...value];
+                if(Array.isArray(value)) return [...value];
             });
         }
+
         toString() {
             let content = '';
             for(let value of this.raw) {
-                const key = (value instanceof Content)? null : value[0];
+                const key = value instanceof Content ? null : value[0];
                 value = value[1];
-                content += `|${key? `${key}=` : ''}${value}`;
+                content += `|${key ? `${key}=` : ''}${value}`;
             }
             return content;
         }
+
         [Symbol.toStringTag] = 'Params';
     }
 
     return class Template {
-        static format: FormExp = Form.new`{{\s*${templateName}${new ZeroMore(TemplateParams, Quantitier.LAZY)}\s*}}`;
+        static format: FormExp = Form.new`{{\s*${templateName}${new ZeroMore(
+            TemplateParams,
+            Quantitier.LAZY,
+        )}\s*}}`;
 
         name: string;
+
         params: TemplateParams;
 
-        constructor(name: string, ...params: Params|[Params]) {
+        constructor(name: string, ...params: Params | [Params]) {
             if(typeof name !== 'string') throw new TypeError('올바른 이름이 지정되지 않았습니다');
 
             this.name = name;
             this.params = new TemplateParams(...params);
         }
-        
+
         toString() {
             return `{{${this.name}${this.params}}}`;
         }

@@ -1,4 +1,4 @@
-export declare type FormExp = Form | RegExp | string | Repeat | Any | Syntax;
+export declare type FormExp = Form | RegExp | string | Repeat | Any | SyntaxConstructor;
 export declare class Form extends Array<FormExp> {
     constructor(...arr: FormExp[] | [FormExp[]]);
     parse(content: string): Content;
@@ -14,6 +14,7 @@ export declare class Repeat {
     content: FormExp;
     quantitier: Quantitier;
     constructor(form: FormExp, min: number, max: number, quantitier: Quantitier);
+    parse(content: string, count?: number): string | Content;
 }
 export declare class Optional extends Repeat {
     constructor(form: FormExp, quantitier: Quantitier);
@@ -33,13 +34,21 @@ export declare class Max extends Repeat {
 }
 export declare class Any extends Set {
     constructor(...forms: FormExp[] | [Iterable<FormExp>]);
+    parse(content: string): string | Syntax;
 }
 export declare class Content extends Array {
     constructor(...args: unknown[]);
     toString(): string;
-    static form(...args: [TemplateStringsArray, ...FormExp[]] | FormExp[]): Syntax;
+    static form(...args: [TemplateStringsArray, ...FormExp[]] | FormExp[]): SyntaxConstructor;
 }
-export interface Syntax {
-    new (...args: unknown[]): any;
+export declare abstract class Syntax {
+    static format: FormExp;
+    static parseTree: (tree: Content) => Syntax;
+    static parse(content: string): Syntax;
+}
+interface SyntaxConstructor {
+    new (...args: unknown[]): Syntax;
     format: FormExp;
+    parseTree(tree: Content): Syntax;
+    parse(content: string): Syntax;
 }
