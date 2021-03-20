@@ -25,7 +25,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts --fix",
     "build": "(npm run lint && (tsc & tsc -p tsconfig-commonjs.json)) & webpack",
-    "build-harmony": "npm run lint && tsc",
+    "build-ecma": "npm run lint && tsc",
     "build-node": "npm run lint && tsc -p tsconfig-commonjs.json",
     "build-web": "webpack",
     "build-web-dev": "webpack --mode development"
@@ -42,9 +42,5 @@
   "bugs": {
     "url": "https://github.com/hsl0/parsorama/issues"
   },
-  "homepage": "https://github.com/hsl0/parsorama#readme",
-  "optionalDependencies": {
-    "@babel/core": "^7.12.10",
-    "babel-loader": "^8.2.2"
-  }
+  "homepage": "https://github.com/hsl0/parsorama#readme"
 }
