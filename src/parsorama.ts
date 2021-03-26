@@ -164,7 +164,10 @@ export class Content extends Array {
 export abstract class Syntax {
     static format: FormExp;
 
-    static parseTree: (tree: Content) => Syntax;
+    static parseTree(tree: Content): Syntax {
+        return tree;
+    }
+
     static parse(content: string): Syntax {
         if(!(this.format instanceof Form)) this.format = new Form(this.format);
         return this.parseTree((this.format as Form).parse(content));
