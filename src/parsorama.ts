@@ -38,7 +38,7 @@ export class Form extends Array <FormExp> {
         for(const part of this) {
             const match = FormExp.parse(part, content)
             tree.push(match);
-            content = content.slice((match as string).length);
+            content = content.slice(match.toString().length);
         }
 
         return tree;
