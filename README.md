@@ -1,2 +1,2 @@
 # parsorama
-parser developing tool
+parser developing tool (under construction)
