@@ -12,11 +12,25 @@ const config = {
         rules: [
             {
                 test: /\.ts$/,
-                loader: 'ts-loader'
+                use: {
+                    loader: "babel-loader",
+                    options: {
+                        presets: [
+                            "@babel/preset-typescript"
+                        ],
+                        plugins: [
+                            ["babel-plugin-replace-import-extension", {
+                                extMapping: {
+                                    ".ts": ".js"
+                                }
+                            }]
+                        ]
+                    }
+                }
             },
             {
                 enforce: "pre",
-                test: /\.js$/,
+                test: /\.m?js$/,
                 loader: 'source-map-loader'
             }
         ]

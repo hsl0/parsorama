@@ -1,2 +1,2 @@
-import * as parsorama from "./parsorama";
+import * as parsorama from "./parsorama.ts";
 window.parsorama = parsorama;

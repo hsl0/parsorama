@@ -2,9 +2,7 @@
 .npmignore
 .vscode/
 .eslintrc.json
-webpack.config.js
-tsconfig-commonjs.json
-tsconfig.json
+builder/
 test/
 src/
 

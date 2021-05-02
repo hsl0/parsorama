@@ -1,14 +1,6 @@
 export type FormExp = Form | RegExp | string | Repeat | Any | SyntaxConstructor;
-
-class InternalError extends Error {
-  constructor(...arr) {
-    super(...arr);
-    this.name = 'ParsoramaInternalError';
-  }
-}
-
-namespace FormExp {
-    export function parse(part: FormExp, content: string): string|Syntax {
+export const FormExp = {
+    parse(part: FormExp, content: string): string|Syntax|null {
         if(part instanceof Repeat) return part.parse(content);
         
         if(part instanceof Any) return part.parse(content);
@@ -16,9 +8,14 @@ namespace FormExp {
         if(part instanceof Object && 'parse' in part) return part.parse(content);
         
         if(typeof part === 'string') {
-            part = new RegExp(`^${part}`);
-            return (content.match(part as RegExp) as string[])[0];
+            const regex = new RegExp(`^${part}`);
+            const matches: string[] | null = content.match(regex);
+
+            if(matches) return matches[0];
+            else return null;
         }
+
+        throw new TypeError(`Part's type "${typeof part}" is wrong type`);
     }
 }
 
@@ -38,7 +35,7 @@ export class Form extends Array <FormExp> {
         for(const part of this) {
             const match = FormExp.parse(part, content)
             tree.push(match);
-            content = content.slice(match.toString().length);
+            if(match) content = content.slice(match.toString().length);
         }
 
         return tree;
@@ -74,17 +71,23 @@ export class Repeat {
         this.quantitier = quantitier;
     }
     
-    parse(content: string, count = 0): string|Content {
+    parse(content: string, count = 0): string|Content|null {
         if(count >= this.max) return content;
-        
-        const match: Syntax | string = FormExp.parse(this.content, content);
         
         if(count < this.min) throw new TypeError("Given content doesn't match with format");
         
+        const match: Syntax | string | null = FormExp.parse(this.content, content);
+
+        if(match == null) return null;
+
         content = content.slice(match.toString().length);
         
         if(typeof match === 'string') return match + this.parse(content, ++count);
-        else new Content(match, ...this.parse(content, ++count));
+        else {
+            const next = this.parse(content, ++count);
+            if(next) return new Content(match, ...next);
+            else return new Content(match);
+        }
     }
 }
 export class Optional extends Repeat {
@@ -119,16 +122,19 @@ export class Max extends Repeat {
 export class Any extends Set {
     constructor(...forms: FormExp[] | [Iterable<FormExp>]) {
         try {
-            // @ts-expect-error Iterable<FormExp> can't be assigned to readonly any[]
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore Iterable<FormExp> can't be assigned to readonly any[]
             super((forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms);
         } catch (err) {
             if (err instanceof TypeError && err.message === "Constructor Set requires 'new'") {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                //@ts-ignore Element implicitly has an 'any' type because expression of type 'symbol' can't be used to index type 'FormExp | Iterable<FormExp>'.
                 return Reflect.construct(Set, [(forms.length === 1 && forms[0][Symbol.iterator]) ? forms[0] : forms], new.target);
             }
         }
     }
     
-    parse(content: string) {
+    parse(content: string): Syntax {
         for(const form of this) {
             const match = FormExp.parse(form, content);
             if(match) return match;

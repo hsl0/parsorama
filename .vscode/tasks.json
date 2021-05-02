@@ -1,0 +1,45 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "(npm run lint && (tsc & tsc -p tsconfig-commonjs.json)) & webpack"
+		},
+		{
+			"type": "npm",
+			"script": "build-ecma",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build-ecma",
+			"detail": "npm run lint && tsc"
+		},
+		{
+			"type": "npm",
+			"script": "build-web-dev",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build-web-dev",
+			"detail": "webpack --mode development"
+		},
+		{
+			"type": "npm",
+			"script": "build-web",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build-web",
+			"detail": "webpack"
+		},
+		{
+			"type": "npm",
+			"script": "build-node",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build-node",
+			"detail": "npm run lint && tsc -p tsconfig-commonjs.json"
+		}
+	]
+}

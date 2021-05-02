@@ -1,4 +1,7 @@
 export declare type FormExp = Form | RegExp | string | Repeat | Any | SyntaxConstructor;
+export declare const FormExp: {
+    parse(part: FormExp, content: string): string | Syntax | null;
+};
 export declare class Form extends Array<FormExp> {
     constructor(...arr: FormExp[] | [FormExp[]]);
     parse(content: string): Content;
@@ -14,7 +17,7 @@ export declare class Repeat {
     content: FormExp;
     quantitier: Quantitier;
     constructor(form: FormExp, min: number, max: number, quantitier: Quantitier);
-    parse(content: string, count?: number): string | Content;
+    parse(content: string, count?: number): string | Content | null;
 }
 export declare class Optional extends Repeat {
     constructor(form: FormExp, quantitier: Quantitier);
@@ -34,7 +37,7 @@ export declare class Max extends Repeat {
 }
 export declare class Any extends Set {
     constructor(...forms: FormExp[] | [Iterable<FormExp>]);
-    parse(content: string): string | Syntax;
+    parse(content: string): Syntax;
 }
 export declare class Content extends Array {
     constructor(...args: unknown[]);
@@ -43,7 +46,7 @@ export declare class Content extends Array {
 }
 export declare abstract class Syntax {
     static format: FormExp;
-    static parseTree: (tree: Content) => Syntax;
+    static parseTree(tree: Content): Syntax;
     static parse(content: string): Syntax;
 }
 interface SyntaxConstructor {

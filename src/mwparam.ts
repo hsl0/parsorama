@@ -6,7 +6,7 @@ import {
     Content,
     Syntax,
     ZeroMore,
-} from './parsorama';
+} from './parsorama.ts';
 
 const Parameter: Syntax = (() => {
     const defaultValue = Content.form`.*`;
@@ -21,7 +21,7 @@ const Parameter: Syntax = (() => {
 
         name: string;
 
-        default?: Content;
+        default?: Content | null;
 
         constructor(name: string, def?: Content | string) {
             if(typeof name !== 'string') { throw new TypeError('올바른 변수명이 지정되지 않았습니다'); }
@@ -48,6 +48,7 @@ const Template: Syntax = (() => {
         | {
               [key: string]: string | Content;
           }
+        | [string | Content]
         | string
         | Content
     >;
@@ -55,7 +56,7 @@ const Template: Syntax = (() => {
     class TemplateParams extends Syntax {
         static format = Form.new`\s*|\s*(${paramName}\s*=\s*)?${paramValue}`;
 
-        protected raw: Array<[string | number, Content] | Content>;
+        protected raw: ([string | number, Content] | Content)[];
 
         protected unnamed: Content[];
 
@@ -68,7 +69,7 @@ const Template: Syntax = (() => {
 
             if(params.length === 1 && (Array.isArray(params[0]) && !(params[0] instanceof Content))) params = params[0];
 
-            const named = [];
+            const named: [string | number, string | Content][] = [];
 
             this.raw = [];
             this.unnamed = [];
@@ -85,8 +86,12 @@ const Template: Syntax = (() => {
                     this.unnamed.push(value);
                     this.registry[this.unnamed.length - 1] = value;
                 } else if(Array.isArray(value)) {
-                    this.raw.push(value);
-                    named.push(value);
+                    value = value.map(value => {
+                        if(typeof value === 'string') return new Content(value);
+                        else return value;
+                    });
+                    this.raw.push(...value);
+                    named.push(...value);
                 } else if(typeof value === 'object') {
                     for(const key in value) {
                         let val = value[key];
@@ -98,6 +103,7 @@ const Template: Syntax = (() => {
             });
 
             named.forEach(([key, value]) => {
+                if(typeof value === 'string') value = new Content(value);
                 this.registry[key] = value;
             });
         }
@@ -139,7 +145,7 @@ const Template: Syntax = (() => {
                 key: string | number,
                 context: this,
             ) => void,
-            thisArg?,
+            thisArg?: unknown,
         ): void {
             for(const [key, value] of this) callbackfn.call(thisArg, value, key, this);
         }
@@ -218,22 +224,22 @@ const Template: Syntax = (() => {
 
         * entries(): IterableIterator<[string | number, Content]> {
             for(const value of this.raw) {
-                if(value instanceof Content) yield [this.raw.indexOf(value), value];
-                else if(Array.isArray(value)) yield [...value];
+                if(value instanceof Content) yield [this.raw.indexOf(value), value as Content];
+                else if(Array.isArray(value)) yield [...value] as [string | number, Content];
             }
         }
 
         * keys(): IterableIterator<string | number> {
             for(const value of this.raw) {
                 if(value instanceof Content) yield this.raw.indexOf(value);
-                else if(Array.isArray(value)) yield value[0];
+                else if(Array.isArray(value)) yield value[0] as string | number;
             }
         }
 
         * values(): IterableIterator<Content> {
             for(const value of this.raw) {
                 if(value instanceof Content) yield value;
-                else if(Array.isArray(value)) yield value[1];
+                else if(Array.isArray(value)) yield value[1] as Content;
             }
         }
 
@@ -248,8 +254,8 @@ const Template: Syntax = (() => {
         exportRaw(): Array<[string | number, Content] | Content> {
             return this.raw.map((value) => {
                 if(value instanceof Content) return value;
-                if(Array.isArray(value)) return [...value];
-            });
+                if(Array.isArray(value)) return [...value as [string | number, Content]];
+            }) as (Content | [string | number, Content])[];
         }
 
         toString() {
@@ -267,7 +273,13 @@ const Template: Syntax = (() => {
 
     return class Template {
         static format: FormExp = Form.new`{{\s*${templateName}${new ZeroMore(
-            TemplateParams,
+            TemplateParams as {
+                new (...args: unknown[]): Syntax;
+                format: FormExp;
+                parseTree(tree: Content): Syntax;
+                parse(content: string): Syntax;
+
+            },
             Quantitier.LAZY,
         )}\s*}}`;
 

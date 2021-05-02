@@ -8,27 +8,37 @@
   "directories": {
     "lib": "src"
   },
-  "dependencies": {},
+  "dependencies": {
+    "babel-loader": "^8.2.2"
+  },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.15.0",
-    "@typescript-eslint/parser": "^4.15.0",
-    "eslint": "^7.19.0",
+    "@babel/cli": "^7.13.16",
+    "@babel/core": "^7.14.0",
+    "@babel/node": "^7.13.13",
+    "@babel/preset-env": "^7.14.0",
+    "@babel/preset-typescript": "^7.13.0",
+    "@typescript-eslint/eslint-plugin": "^4.22.0",
+    "@typescript-eslint/parser": "^4.22.0",
+    "babel-plugin-replace-import-extension": "^1.1.0",
+    "eslint": "^7.25.0",
     "eslint-plugin-import": "^2.22.1",
-    "eslint-webpack-plugin": "^2.5.1",
+    "eslint-webpack-plugin": "^2.5.4",
     "source-map-loader": "^2.0.1",
-    "ts-loader": "^8.0.17",
-    "typescript": "^4.1.5",
-    "webpack": "^5.21.2",
-    "webpack-cli": "^4.5.0"
+    "ts-loader": "^8.2.0",
+    "typescript": "^4.2.4",
+    "webpack": "^5.36.1",
+    "webpack-cli": "^4.6.0"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts --fix",
-    "build": "(npm run lint && (tsc & tsc -p tsconfig-commonjs.json)) & webpack",
-    "build-ecma": "npm run lint && tsc",
-    "build-node": "npm run lint && tsc -p tsconfig-commonjs.json",
-    "build-web": "webpack",
-    "build-web-dev": "webpack --mode development"
+    "babel": "npx babel src/ -d dist -x .ts --config-file ./builder/babel.config.json --out-file-extension .js -s",
+    "babel-node": "npx babel src/ -d dist/node -x .ts --config-file ./builder/node.babel.config.json --out-file-extension .js -s",
+    "build": "(npm run lint && (tsc -p builder/tsconfig.json & npm run babel & npm run babel-node)) & webpack -c builder/webpack.config.js",
+    "build-browser": "npm run lint && (tsc -p builder/tsconfig.json & npm run babel)",
+    "build-node": "npm run lint && (tsc -p builder/tsconfig.json & npm run babel-node)",
+    "build-web": "webpack -c builder/webpack.config.js",
+    "build-web-dev": "webpack -c builder/webpack.config.js --mode development"
   },
   "repository": {
     "type": "git",

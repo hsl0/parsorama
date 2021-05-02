@@ -1,0 +1,12 @@
+{
+    "presets": [
+        "@babel/preset-typescript"
+    ],
+    "plugins": [
+        ["babel-plugin-replace-import-extension", {
+            "extMapping": {
+                ".ts": ".js"
+            }
+        }]
+    ]
+}

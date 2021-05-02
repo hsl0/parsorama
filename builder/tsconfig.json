@@ -4,12 +4,14 @@
         "lib": ["ESNext", "DOM"],
         "module": "ES2015",
         "sourceMap": true,
-        "outDir": "dist",
+        "outDir": "../dist",
         "declaration": true,
+        "emitDeclarationOnly": true,
+        "isolatedModules": true,
         "downlevelIteration": true,
         "moduleResolution": "node"
     },
     "include": [
-        "./src/**/*"
+        "../src/**/*"
     ]
 }
