@@ -2,7 +2,7 @@ const ESLintPlugin = require('eslint-webpack-plugin');
 const path = require('path');
 
 const config = {
-    entry: './src/web.js',
+    entry: '../src/web.js',
     mode: 'production',
     output: {
         path: path.resolve(__dirname, 'dist'),
