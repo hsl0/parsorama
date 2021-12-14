@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Syntax = exports.Content = exports.Any = exports.Max = exports.Min = exports.ZeroMore = exports.OneMore = exports.ZeroOne = exports.Optional = exports.Repeat = exports.Quantitier = exports.Form = exports.FormExp = void 0;
+exports.ZeroOne = exports.ZeroMore = exports.Syntax = exports.Repeat = exports.Quantitier = exports.Optional = exports.OneMore = exports.Min = exports.Max = exports.FormExp = exports.Form = exports.Content = exports.Any = void 0;
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
